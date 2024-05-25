@@ -2,7 +2,7 @@ class ParseError(Exception):
     pass
 
 
-class InvalidDataType(ParseError):
+class InvalidDataType(Exception):
     pass
 
 

@@ -1,4 +1,5 @@
 import enum
+import typing as t
 
 
 class DataType(enum.Enum):
@@ -16,6 +17,20 @@ class DataType(enum.Enum):
     MAP = b"%"
     SET = b"~"
     PUSH = b">"
+
+
+class Value:
+
+    def __init__(self, type: DataType, value: t.Any) -> None:
+        self.type = type
+        self.value: t.Any | None = value
+
+    def __repr__(self) -> str:
+        return f"Value(type={self.type} value={self.value})"
+
+    def __str__(self) -> str:
+        return self.__repr__()
+
 
 
 CRLF = b"\r\n"

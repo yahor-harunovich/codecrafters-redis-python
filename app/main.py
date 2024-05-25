@@ -3,6 +3,7 @@ import logging
 import socket
 
 from app.executor import Executor
+from app.resp import DataType, Value
 from app.resp.encoder import Encoder
 from app.resp.parser import Parser
 
@@ -25,13 +26,16 @@ def handle_client(client_socket: socket.socket) -> None:
                 if not data:
                     break
                 try:
-                    value, _ = Parser.parse(data)
-                    command, *arguments = value
-                    result = Executor.handle_command(command, arguments)
+                    parse_result, _ = Parser.parse(data)
+                    logging.info(f"Parse result: {parse_result}") 
+                    command_result = Executor.handle_command(parse_result)
+                    command_result = Encoder.encode(command_result)
+                    client_socket.sendall(command_result)
                 except Exception as e:
                     logging.error(f"Error: {e}")
-                    result = Encoder.encode_simple_error(error_message=str(e))
-                client_socket.sendall(result)
+                    error_value = Value(DataType.SIMPLE_ERROR, value=("ERR", str(e)))
+                    error_response = Encoder.encode(error_value)
+                    client_socket.sendall(error_response)
     except Exception as e:
         logging.error(f"Error: {e}")
 

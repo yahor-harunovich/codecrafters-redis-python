@@ -1,13 +1,13 @@
 import typing as t
 
 from app import exceptions
-from app.resp import DataType, CRLF
+from app.resp import Value, DataType, CRLF
 
 
 class Parser:
 
     @classmethod
-    def parse(cls, data: bytes) -> tuple[t.Any, bytes]:
+    def parse(cls, data: bytes) -> tuple[Value | None, bytes]:
 
         if not data or data == CRLF:
             return None, b""
@@ -50,7 +50,7 @@ class Parser:
                 raise exceptions.InvalidDataType(f"Unknown data type: {data_type}")
 
     @classmethod
-    def parse_array(cls, data: bytes) -> tuple[list[t.Any], bytes]:
+    def parse_array(cls, data: bytes) -> tuple[Value, bytes]:
 
         size, data = data.split(CRLF, maxsplit=1)
         data = data.rstrip(CRLF)
@@ -60,21 +60,24 @@ class Parser:
             element, data = cls.parse(data)
             elements.append(element)
 
-        return elements, data
+        value = Value(DataType.ARRAY, elements)
+        return value, data
 
     @classmethod
-    def parse_simple_string(cls, data: bytes) -> tuple[str, bytes]:
+    def parse_simple_string(cls, data: bytes) -> tuple[Value, bytes]:
 
         s, data = data.split(CRLF, maxsplit=1) 
         data = data.rstrip(CRLF)
         s = s.decode("utf-8")
-        return s, data
+        value = Value(DataType.SIMPLE_STRING, s)
+        return value, data
 
     @classmethod
-    def parse_bulk_string(cls, data: bytes) -> tuple[str, bytes]:
+    def parse_bulk_string(cls, data: bytes) -> tuple[Value, bytes]:
 
         length, data = data.split(CRLF, maxsplit=1)
         length = int(length.decode("utf-8"))
         value = data[:length].decode("utf-8")
         data = data[length:].lstrip(CRLF)
+        value = Value(DataType.BULK_STRING, value)
         return value, data
