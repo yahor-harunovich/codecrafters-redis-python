@@ -2,6 +2,10 @@ from concurrent.futures import ThreadPoolExecutor
 import logging
 import socket
 
+from app.resp_parser import Parser
+from app.executor import Executor
+from app.exceptions import handle_error
+
 
 SERVER_ADDRESS = ("localhost", 6379)
 MAX_WORKERS = 50
@@ -20,7 +24,14 @@ def handle_client(client_socket: socket.socket) -> None:
                 logging.info(f"Received from {client_socket.getpeername()}: {data}") 
                 if not data:
                     break
-                client_socket.sendall(b"+PONG\r\n")
+                try:
+                    value, _ = Parser.parse(data)
+                    command, *arguments = value
+                    result = Executor.handle_command(command, arguments)
+                except Exception as e:
+                    logging.error(f"Error: {e}")
+                    result = handle_error(error_message=str(e))
+                client_socket.sendall(result)
     except Exception as e:
         logging.error(f"Error: {e}")
 
@@ -36,7 +47,6 @@ def main() -> None:
                     client_socket, _ = server_socket.accept()
                     logging.info(f"Accepted connection from {client_socket.getpeername()}")
                     executor.submit(handle_client, client_socket) 
-
     except Exception as e:
         logging.error(f"Error: {e}")
         
