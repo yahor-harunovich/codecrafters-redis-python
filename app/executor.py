@@ -2,6 +2,7 @@ import enum
 import logging
 
 from app import exceptions
+from app.resp.encoder import Encoder
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -31,14 +32,13 @@ class Executor:
     @classmethod
     def handle_ping(cls) -> bytes:
         logging.info("PING")
-        result = b"+PONG\r\n"
+        result = Encoder.encode_simple_string("PONG")
         logging.info(f"Result: {result}")
         return result 
 
     @classmethod
     def handle_echo(cls, message: str) -> bytes:
         logging.info(f"ECHO {message}")
-        length = len(message.encode(encoding="utf-8"))
-        result = f"${length}\r\n{message}\r\n".encode(encoding="utf-8")
+        result = Encoder.encode_bulk_string(message)
         logging.info(f"Result: {result}")
         return result

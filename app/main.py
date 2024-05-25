@@ -2,9 +2,9 @@ from concurrent.futures import ThreadPoolExecutor
 import logging
 import socket
 
-from app.resp_parser import Parser
 from app.executor import Executor
-from app.exceptions import handle_error
+from app.resp.encoder import Encoder
+from app.resp.parser import Parser
 
 
 SERVER_ADDRESS = ("localhost", 6379)
@@ -30,7 +30,7 @@ def handle_client(client_socket: socket.socket) -> None:
                     result = Executor.handle_command(command, arguments)
                 except Exception as e:
                     logging.error(f"Error: {e}")
-                    result = handle_error(error_message=str(e))
+                    result = Encoder.encode_simple_error(error_message=str(e))
                 client_socket.sendall(result)
     except Exception as e:
         logging.error(f"Error: {e}")

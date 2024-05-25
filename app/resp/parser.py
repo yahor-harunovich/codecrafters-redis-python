@@ -1,27 +1,7 @@
-import enum
 import typing as t
 
 from app import exceptions
-
-
-class DataType(enum.Enum):
-    SIMPLE_STRING = b"+"
-    SIMPLE_ERROR = b"-"
-    INTEGER = b":"
-    BULK_STRING = b"$"
-    ARRAY = b"*"
-    NULL = b"_"
-    BOOLEAN = b"#"
-    DOUBLE = b","
-    BIG_NUMBER = b"("
-    BULK_ERROR = b"!"
-    VERBATIM_STRING = b"="
-    MAP = b"%"
-    SET = b"~"
-    PUSH = b">"
-
-
-CRLF = b"\r\n"
+from app.resp import DataType, CRLF
 
 
 class Parser:
@@ -45,27 +25,27 @@ class Parser:
                 value, data = cls.parse_bulk_string(data)
                 return value, data
             case DataType.INTEGER.value:
-                raise NotImplementedError("Integer not implemented")
+                raise NotImplementedError("Integer data type not implemented")
             case DataType.BOOLEAN.value:
-                raise NotImplementedError("Boolean not implemented")
+                raise NotImplementedError("Boolean data type not implemented")
             case DataType.DOUBLE.value:
-                raise NotImplementedError("Double not implemented")
+                raise NotImplementedError("Double data type not implemented")
             case DataType.BIG_NUMBER.value:
-                raise NotImplementedError("Big number not implemented")
+                raise NotImplementedError("Big number data type not implemented")
             case DataType.NULL.value:
-                raise NotImplementedError("Null not implemented")
+                raise NotImplementedError("Null data type not implemented")
             case DataType.VERBATIM_STRING.value:
-                raise NotImplementedError("Verbatim string not implemented")
+                raise NotImplementedError("Verbatim string data type not implemented")
             case DataType.MAP.value:
-                raise NotImplementedError("Map not implemented")
+                raise NotImplementedError("Map data type not implemented")
             case DataType.SET.value:
-                raise NotImplementedError("Set not implemented")
+                raise NotImplementedError("Set data type not implemented")
             case DataType.PUSH.value:
-                raise NotImplementedError("Push not implemented")
+                raise NotImplementedError("Push data type not implemented")
             case DataType.SIMPLE_ERROR.value:
-                raise NotImplementedError("Simple error not implemented")
+                raise NotImplementedError("Simple data error type not implemented")
             case DataType.BULK_ERROR.value:
-                raise NotImplementedError("Bulk error not implemented")
+                raise NotImplementedError("Bulk data error type not implemented")
             case _:
                 raise exceptions.InvalidDataType(f"Unknown data type: {data_type}")
 
