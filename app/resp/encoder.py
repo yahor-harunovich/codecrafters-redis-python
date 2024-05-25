@@ -11,7 +11,10 @@ class Encoder:
         return result
 
     @classmethod
-    def encode_bulk_string(cls, message: str) -> bytes:
+    def encode_bulk_string(cls, message: str | None) -> bytes:
+        if message is None:
+            # Null Bulk String
+            return b"$-1\r\n"
         length = len(message.encode(encoding="utf-8"))
         result = f"${length}{CRLF}{message}{CRLF}".encode(encoding="utf-8")
         return result
