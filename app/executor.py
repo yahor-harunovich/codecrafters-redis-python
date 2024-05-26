@@ -29,10 +29,15 @@ class Command(CaseInsensitiveEnum):
     ECHO = "ECHO"
     SET = "SET"
     GET = "GET"
+    INFO = "INFO"
 
 
 class Parameter(CaseInsensitiveEnum):
     PX = "PX"
+
+
+class INFOSection(CaseInsensitiveEnum):
+    REPLICATION = "REPLICATION" 
 
 
 class Executor:
@@ -56,6 +61,9 @@ class Executor:
                 result = cls.handle_set(key, value, expiry_ms=expiry_ms)
             case [Command.GET, key]:
                 result = cls.handle_get(key)
+            case [Command.INFO, section]:
+                section = INFOSection(section.s)
+                result = cls.handle_info(section)
             case _:
                 raise exceptions.InvalidCommand(f"Unknown command: {command}")
 
@@ -92,5 +100,15 @@ class Executor:
         result = cls.storage.get(key) 
         if result is None:
             result = resp.BulkString(None)
+        logging.info(f"Result: {result}")
+        return result
+
+    @classmethod
+    def handle_info(cls, section: INFOSection) -> resp.BulkString:
+        logging.info(f"INFO {section}")
+        if section == INFOSection.REPLICATION:
+            result = resp.BulkString("role:master")
+        else:
+            raise exceptions.InvalidCommand(f"Unknown INFO section: {section}")
         logging.info(f"Result: {result}")
         return result
