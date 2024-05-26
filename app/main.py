@@ -4,7 +4,7 @@ import socket
 import argparse
 
 from app import resp, storage
-from app.executor import Executor, Role
+from app.executor import Executor, Role, Command
 from app.resp.parser import Parser
 
 
@@ -46,6 +46,17 @@ def handle_client(client_socket: socket.socket) -> None:
     logging.info(f"Connection from {client_socket.getpeername()} closed")
 
 
+def replication_handshake(master_host: str, master_port: int) -> None:
+
+    with socket.create_connection((master_host, master_port)) as master_socket:
+        command = resp.Array([resp.BulkString(str(Command.PING))])
+        logging.info(f"Sending PING to master")
+        master_socket.sendall(command.encode())
+        response = master_socket.recv(BUFFER_SIZE)
+        parse_result, _ = Parser.parse(response)
+        logging.info(f"Master response: {parse_result}")
+
+
 def init_server(args: argparse.Namespace) -> None:
 
     meta_storage = storage.MetaStorage()
@@ -54,6 +65,9 @@ def init_server(args: argparse.Namespace) -> None:
         replication["role"] = Role.SLAVE 
         logging.info(f"Role: {Role.SLAVE}")
         logging.info(f"Replicating data from {args.replicaof}")
+        master_host, master_port = args.replicaof.split(" ")
+        master_port = int(master_port)
+        replication_handshake(master_host, master_port)
     else:
         replication["role"] = Role.MASTER
         replication["master_replid"] = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"
