@@ -31,6 +31,7 @@ class Command(CaseInsensitiveEnum):
     GET = "GET"
     INFO = "INFO"
     REPLCONF = "REPLCONF"
+    PSYNC = "PSYNC"
 
 class Parameter(CaseInsensitiveEnum):
     PX = "PX"
@@ -72,6 +73,8 @@ class Executor:
                 result = cls.handle_info(section)
             case  [Command.REPLCONF, key, value]:
                 result = cls.handle_replconf(key, value) 
+            case [Command.PSYNC, replicationid, offset]:
+                result = cls.handle_psync(replicationid, offset)
             case _:
                 raise exceptions.InvalidCommand(f"Unknown command: {command}")
 
@@ -122,4 +125,13 @@ class Executor:
     def handle_replconf(cls, key: resp.BulkString, value: resp.BulkString) -> resp.SimpleString:
         logging.info(f"REPLCONF {key} {value}")
         result = resp.SimpleString("OK") 
+        return result
+
+    @classmethod
+    def handle_psync(cls, replicationid: resp.BulkString, offset: resp.BulkString) -> resp.SimpleString:
+        logging.info(f"PSYNC {replicationid} {offset}")
+        replication = cls.meta_storage.get("replication")
+        replication = replication or {}
+        master_replid = replication.get("master_replid")
+        result = resp.SimpleString(f"FULLRESYNC {master_replid} 0") 
         return result

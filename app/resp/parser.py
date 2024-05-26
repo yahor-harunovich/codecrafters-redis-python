@@ -42,9 +42,9 @@ class Parser:
             case resp.DataType.PUSH.value:
                 raise NotImplementedError("Push data type not implemented")
             case resp.DataType.SIMPLE_ERROR.value:
-                raise NotImplementedError("Simple data error type not implemented")
+                raise NotImplementedError("Simple error data type not implemented")
             case resp.DataType.BULK_ERROR.value:
-                raise NotImplementedError("Bulk data error type not implemented")
+                raise NotImplementedError("Bulk error data type not implemented")
             case _:
                 raise exceptions.InvalidDataType(f"Unknown data type: {data_type}")
 

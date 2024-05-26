@@ -82,6 +82,17 @@ def replication_handshake(args: argparse.Namespace) -> None:
         parse_result, _ = Parser.parse(response)
         logging.info(f"Master response: {parse_result}")
 
+        command = resp.Array([
+            resp.BulkString(str(Command.PSYNC)),
+            resp.BulkString("?"),
+            resp.BulkString("-1"),
+        ])
+        logging.info(f"Sending PSYNC ? -1 to master")
+        master_socket.sendall(command.encode())
+        response = master_socket.recv(BUFFER_SIZE)
+        parse_result, _ = Parser.parse(response)
+        logging.info(f"Master response: {parse_result}")
+
 
 def init_server(args: argparse.Namespace) -> None:
 
