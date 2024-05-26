@@ -30,7 +30,7 @@ class Command(CaseInsensitiveEnum):
     SET = "SET"
     GET = "GET"
     INFO = "INFO"
-
+    REPLCONF = "REPLCONF"
 
 class Parameter(CaseInsensitiveEnum):
     PX = "PX"
@@ -70,6 +70,8 @@ class Executor:
             case [Command.INFO, section]:
                 section = INFOSection(section.s)
                 result = cls.handle_info(section)
+            case  [Command.REPLCONF, key, value]:
+                result = cls.handle_replconf(key, value) 
             case _:
                 raise exceptions.InvalidCommand(f"Unknown command: {command}")
 
@@ -114,4 +116,10 @@ class Executor:
             result = resp.BulkString(result)
         else:
             raise exceptions.InvalidCommand(f"Unknown INFO section: {section}")
+        return result
+
+    @classmethod
+    def handle_replconf(cls, key: resp.BulkString, value: resp.BulkString) -> resp.SimpleString:
+        logging.info(f"REPLCONF {key} {value}")
+        result = resp.SimpleString("OK") 
         return result

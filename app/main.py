@@ -46,11 +46,37 @@ def handle_client(client_socket: socket.socket) -> None:
     logging.info(f"Connection from {client_socket.getpeername()} closed")
 
 
-def replication_handshake(master_host: str, master_port: int) -> None:
+def replication_handshake(args: argparse.Namespace) -> None:
+
+    master_host, master_port = args.replicaof.split(" ")
+    master_port = int(master_port)
 
     with socket.create_connection((master_host, master_port)) as master_socket:
+
         command = resp.Array([resp.BulkString(str(Command.PING))])
         logging.info(f"Sending PING to master")
+        master_socket.sendall(command.encode())
+        response = master_socket.recv(BUFFER_SIZE)
+        parse_result, _ = Parser.parse(response)
+        logging.info(f"Master response: {parse_result}")
+
+        command = resp.Array([
+            resp.BulkString(str(Command.REPLCONF)),
+            resp.BulkString("listening-port"),
+            resp.BulkString(str(args.port)),
+        ])
+        logging.info(f"Sending REPLCONF listening-port {args.port} to master")
+        master_socket.sendall(command.encode())
+        response = master_socket.recv(BUFFER_SIZE)
+        parse_result, _ = Parser.parse(response)
+        logging.info(f"Master response: {parse_result}")
+
+        command = resp.Array([
+            resp.BulkString(str(Command.REPLCONF)),
+            resp.BulkString("capa"),
+            resp.BulkString("psync2"),
+        ])
+        logging.info(f"Sending REPLCONF capa psync2 to master")
         master_socket.sendall(command.encode())
         response = master_socket.recv(BUFFER_SIZE)
         parse_result, _ = Parser.parse(response)
@@ -65,9 +91,8 @@ def init_server(args: argparse.Namespace) -> None:
         replication["role"] = Role.SLAVE 
         logging.info(f"Role: {Role.SLAVE}")
         logging.info(f"Replicating data from {args.replicaof}")
-        master_host, master_port = args.replicaof.split(" ")
-        master_port = int(master_port)
-        replication_handshake(master_host, master_port)
+
+        replication_handshake(args)
     else:
         replication["role"] = Role.MASTER
         replication["master_replid"] = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"
