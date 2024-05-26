@@ -2,9 +2,8 @@ from concurrent.futures import ThreadPoolExecutor
 import logging
 import socket
 
+from app import resp
 from app.executor import Executor
-from app.resp import DataType, Value
-from app.resp.encoder import Encoder
 from app.resp.parser import Parser
 
 
@@ -28,14 +27,16 @@ def handle_client(client_socket: socket.socket) -> None:
                 try:
                     parse_result, _ = Parser.parse(data)
                     logging.info(f"Parse result: {parse_result}") 
+                    if parse_result is None:
+                        continue
+                    if not isinstance(parse_result, resp.Array):
+                        raise ValueError("Invalid command")
                     command_result = Executor.handle_command(parse_result)
-                    command_result = Encoder.encode(command_result)
-                    client_socket.sendall(command_result)
+                    client_socket.sendall(command_result.encode())
                 except Exception as e:
                     logging.error(f"Error: {e}")
-                    error_value = Value(DataType.SIMPLE_ERROR, value=("ERR", str(e)))
-                    error_response = Encoder.encode(error_value)
-                    client_socket.sendall(error_response)
+                    error = resp.SimpleError(message=str(e))
+                    client_socket.sendall(error.encode())
     except Exception as e:
         logging.error(f"Error: {e}")
 
