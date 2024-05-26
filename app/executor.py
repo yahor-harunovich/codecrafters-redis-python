@@ -57,7 +57,7 @@ class Executor:
             case [Command.GET, key]:
                 result = cls.handle_get(key)
             case _:
-                raise exceptions.InvalidCommand(f"Unknown command: ")
+                raise exceptions.InvalidCommand(f"Unknown command: {command}")
 
         return result
 

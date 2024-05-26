@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import enum
 
 
-CRLF = b"\r\n"
+CRLF = "\r\n"
 
 class DataType(enum.Enum):
     SIMPLE_STRING = b"+"

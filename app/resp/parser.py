@@ -3,10 +3,12 @@ from app import exceptions, resp
 
 class Parser:
 
+    CRLF = resp.CRLF.encode("utf-8")
+
     @classmethod
     def parse(cls, data: bytes) -> tuple[resp.Value | None, bytes]:
 
-        if not data or data == resp.CRLF:
+        if not data or data == cls.CRLF:
             return None, b""
         
         data_type = data[0:1]
@@ -49,8 +51,8 @@ class Parser:
     @classmethod
     def parse_array(cls, data: bytes) -> tuple[resp.Array, bytes]:
 
-        size, data = data.split(resp.CRLF, maxsplit=1)
-        data = data.rstrip(resp.CRLF)
+        size, data = data.split(cls.CRLF, maxsplit=1)
+        data = data.rstrip(cls.CRLF)
         size = int(size.decode("utf-8"))
         elements = []
         for _ in range(size):
@@ -63,8 +65,8 @@ class Parser:
     @classmethod
     def parse_simple_string(cls, data: bytes) -> tuple[resp.SimpleString, bytes]:
 
-        s, data = data.split(resp.CRLF, maxsplit=1) 
-        data = data.rstrip(resp.CRLF)
+        s, data = data.split(cls.CRLF, maxsplit=1) 
+        data = data.rstrip(cls.CRLF)
         s = s.decode("utf-8")
         value = resp.SimpleString(s) 
         return value, data
@@ -72,9 +74,9 @@ class Parser:
     @classmethod
     def parse_bulk_string(cls, data: bytes) -> tuple[resp.BulkString, bytes]:
 
-        length, data = data.split(resp.CRLF, maxsplit=1)
+        length, data = data.split(cls.CRLF, maxsplit=1)
         length = int(length.decode("utf-8"))
         value = data[:length].decode("utf-8")
-        data = data[length:].lstrip(resp.CRLF)
+        data = data[length:].lstrip(cls.CRLF)
         value = resp.BulkString(value) 
         return value, data

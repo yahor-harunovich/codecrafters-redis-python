@@ -3,8 +3,7 @@ import datetime
 import threading
 import logging
 
-from app import exceptions
-from app.resp import Value, DataType
+from app import exceptions, resp
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -12,7 +11,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 
 @dataclasses.dataclass
 class Entry:
-    value: Value 
+    value: resp.Value 
     expires_at: datetime.datetime | None = None
 
 
@@ -29,10 +28,10 @@ class Storage:
         self.data: dict[str, Entry] = {}
         self.lock = threading.Lock()
 
-    def set(self, key: Value, value: Value, *, expiry_ms: int | None = None) -> None:
+    def set(self, key: resp.BulkString, value: resp.Value, *, expiry_ms: int | None = None) -> None:
 
-        if key.type not in (DataType.SIMPLE_STRING, DataType.BULK_STRING) or key.value is None:
-            raise exceptions.InvalidDataType("Invalid key data type")
+        if key.s is None:
+            raise exceptions.InvalidDataType("Invalid key")
 
         with self.lock:
             entry = Entry(value)
@@ -40,21 +39,21 @@ class Storage:
                 now = datetime.datetime.now(tz=datetime.timezone.utc)
                 expires_at = now + datetime.timedelta(milliseconds=expiry_ms)
                 entry.expires_at = expires_at
-            self.data[key.value] = entry 
+            self.data[key.s] = entry 
 
-    def get(self, key: Value) -> Value | None:
+    def get(self, key: resp.BulkString) -> resp.Value | None:
 
-        if key.type not in (DataType.SIMPLE_STRING, DataType.BULK_STRING) or key.value is None:
-            raise exceptions.InvalidDataType("Invalid key data type")
+        if key.s is None:
+            raise exceptions.InvalidDataType("Invalid key")
 
         with self.lock:
             now = datetime.datetime.now(tz=datetime.timezone.utc)
-            entry = self.data.get(key.value)
+            entry = self.data.get(key.s)
             if entry is None:
                 return None
             if entry.expires_at is not None and now >= entry.expires_at:
-                logging.info(f"Key {key.value} expired")
-                del self.data[key.value]
+                logging.info(f"Key {key.s} expired")
+                del self.data[key.s]
                 return None
 
             return entry.value
