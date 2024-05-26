@@ -15,10 +15,10 @@ class Entry:
     expires_at: datetime.datetime | None = None
 
 
-class Storage:
+class ClientStorage:
     _instance = None
 
-    def __new__(cls, *args, **kwargs) -> "Storage": 
+    def __new__(cls, *args, **kwargs) -> "ClientStorage": 
 
         if not cls._instance:
             cls._instance = super().__new__(cls, *args, **kwargs)
@@ -57,3 +57,27 @@ class Storage:
                 return None
 
             return entry.value
+
+
+class MetaStorage:
+    _instance = None
+
+    def __new__(cls, *args, **kwargs) -> "MetaStorage":
+
+        if not cls._instance:
+            cls._instance = super().__new__(cls, *args, **kwargs)
+        return cls._instance
+
+    def __init__(self) -> None:
+        self.data: dict[str, str] = {}
+        self.lock = threading.Lock()
+
+    def set(self, key: str, value: str) -> None:
+
+        with self.lock:
+            self.data[key] = value
+
+    def get(self, key: str) -> str | None:
+
+        with self.lock:
+            return self.data.get(key)

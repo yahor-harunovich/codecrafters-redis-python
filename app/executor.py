@@ -40,9 +40,15 @@ class INFOSection(CaseInsensitiveEnum):
     REPLICATION = "REPLICATION" 
 
 
+class Role(CaseInsensitiveEnum):
+    MASTER = "master"
+    SLAVE = "slave"
+
+
 class Executor:
 
-    storage = storage.Storage()
+    client_storage = storage.ClientStorage()
+    meta_storage = storage.MetaStorage()
 
     @classmethod
     def handle_command(cls, command: resp.Array) -> resp.Value:
@@ -73,14 +79,12 @@ class Executor:
     def handle_ping(cls) -> resp.Value:
         logging.info("PING")
         result = resp.SimpleString("PONG") 
-        logging.info(f"Result: {result}")
         return result 
 
     @classmethod
     def handle_echo(cls, message: resp.BulkString) -> resp.BulkString:
         logging.info(f"ECHO {message}")
         result = message 
-        logging.info(f"Result: {result}")
         return result
 
     @classmethod
@@ -89,26 +93,26 @@ class Executor:
             logging.info(f"SET {key} {value} PX {expiry_ms}")
         else:
             logging.info(f"SET {key} {value}")
-        cls.storage.set(key, value, expiry_ms=expiry_ms)
+        cls.client_storage.set(key, value, expiry_ms=expiry_ms)
         result = resp.SimpleString("OK") 
-        logging.info(f"Result: {result}")
         return result
 
     @classmethod
     def handle_get(cls, key: resp.BulkString) -> resp.Value:
         logging.info(f"GET {key}")
-        result = cls.storage.get(key) 
+        result = cls.client_storage.get(key) 
         if result is None:
             result = resp.BulkString(None)
-        logging.info(f"Result: {result}")
         return result
 
     @classmethod
     def handle_info(cls, section: INFOSection) -> resp.BulkString:
         logging.info(f"INFO {section}")
         if section == INFOSection.REPLICATION:
-            result = resp.BulkString("role:master")
+            role = Role.MASTER 
+            if cls.meta_storage.get("replicaof") is not None:
+                role = Role.SLAVE
+            result = resp.BulkString(f"role:{role}") 
         else:
             raise exceptions.InvalidCommand(f"Unknown INFO section: {section}")
-        logging.info(f"Result: {result}")
         return result
