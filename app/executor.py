@@ -109,10 +109,9 @@ class Executor:
     def handle_info(cls, section: INFOSection) -> resp.BulkString:
         logging.info(f"INFO {section}")
         if section == INFOSection.REPLICATION:
-            role = Role.MASTER 
-            if cls.meta_storage.get("replicaof") is not None:
-                role = Role.SLAVE
-            result = resp.BulkString(f"role:{role}") 
+            replication = cls.meta_storage.get("replication") or {}
+            result = "\n".join(f"{key}:{value}" for key, value in replication.items())
+            result = resp.BulkString(result)
         else:
             raise exceptions.InvalidCommand(f"Unknown INFO section: {section}")
         return result

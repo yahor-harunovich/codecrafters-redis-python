@@ -72,7 +72,7 @@ class MetaStorage:
         self.data: dict[str, str] = {}
         self.lock = threading.Lock()
 
-    def set(self, key: str, value: str) -> None:
+    def set(self, key: str, value) -> None:
 
         with self.lock:
             self.data[key] = value

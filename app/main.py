@@ -45,6 +45,23 @@ def handle_client(client_socket: socket.socket) -> None:
 
     logging.info(f"Connection from {client_socket.getpeername()} closed")
 
+
+def init_server(args: argparse.Namespace) -> None:
+
+    meta_storage = storage.MetaStorage()
+    replication = {}
+    if args.replicaof:
+        replication["role"] = Role.SLAVE 
+        logging.info(f"Role: {Role.SLAVE}")
+        logging.info(f"Replicating data from {args.replicaof}")
+    else:
+        replication["role"] = Role.MASTER
+        replication["master_replid"] = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"
+        replication["master_repl_offset"] = 0
+        logging.info(f"Role: {Role.MASTER}")
+
+    meta_storage.set("replication", replication)
+
 def main() -> None:
 
     parser = argparse.ArgumentParser(description="Simple Redis-like server")
@@ -54,15 +71,8 @@ def main() -> None:
 
     try:
         with socket.create_server((HOST, args.port), reuse_port=True) as server_socket:
-
             logging.info(f"Server listening on {HOST}:{args.port}")
-            if args.replicaof:
-                storage.MetaStorage().set("replicaof", args.replicaof)
-                logging.info(f"Role: {Role.SLAVE}")
-                logging.info(f"Replicating data from {args.replicaof}")
-            else:
-                logging.info(f"Role: {Role.MASTER}")
-
+            init_server(args)
             with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
                 while True:
                     client_socket, _ = server_socket.accept()
