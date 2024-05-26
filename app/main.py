@@ -1,13 +1,15 @@
 from concurrent.futures import ThreadPoolExecutor
 import logging
 import socket
+import argparse
 
 from app import resp
 from app.executor import Executor
 from app.resp.parser import Parser
 
 
-SERVER_ADDRESS = ("localhost", 6379)
+HOST = "localhost"
+PORT = 6379
 MAX_WORKERS = 50
 BUFFER_SIZE = 1024
 
@@ -44,9 +46,13 @@ def handle_client(client_socket: socket.socket) -> None:
 
 def main() -> None:
 
+    parser = argparse.ArgumentParser(description="Simple Redis-like server")
+    parser.add_argument("--port", type=int, default=PORT, help="Port to listen on")
+    args = parser.parse_args()
+
     try:
-        with socket.create_server(SERVER_ADDRESS, reuse_port=True) as server_socket:
-            logging.info(f"Server listening on {SERVER_ADDRESS}")
+        with socket.create_server((HOST, args.port), reuse_port=True) as server_socket:
+            logging.info(f"Server listening on {HOST}:{args.port}")
             with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
                 while True:
                     client_socket, _ = server_socket.accept()
